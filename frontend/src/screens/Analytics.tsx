@@ -92,8 +92,8 @@ export default function Analytics() {
 
     return {
       month: monthNames[d.getMonth()],
-      revenue: mRevenue || 300000, // base fallback values for nice chart lines
-      cost: (mFuel + mMaint) || 120000
+      revenue: mRevenue,
+      cost: mFuel + mMaint
     }
   })
 
@@ -122,7 +122,7 @@ export default function Analytics() {
     const count = trips.filter(t => t.date?.startsWith(mStr)).length
     return {
       month: monthNames[d.getMonth()],
-      trips: count || 4 // fallback base for visual representation
+      trips: count
     }
   })
 

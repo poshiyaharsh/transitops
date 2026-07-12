@@ -85,13 +85,13 @@ export default function Dashboard() {
   const daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
   const tripData = daysOfWeek.map(dayName => {
     // For this simple mock, we map dates to day-of-week
-    const count = trips.filter(t => {
+        const count = trips.filter(t => {
       if (!t.date) return false
       const dayIdx = new Date(t.date).getDay() // 0 = Sun, 1 = Mon ...
       const adjustedIdx = dayIdx === 0 ? 6 : dayIdx - 1
       return daysOfWeek[adjustedIdx] === dayName
     }).length
-    return { day: dayName, trips: count || 2 } // fallback base for visual representation
+    return { day: dayName, trips: count } // fallback base for visual representation
   })
 
   // 2. Monthly Fuel Cost Chart (group fuel logs by last 6 months)
