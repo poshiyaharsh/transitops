@@ -18,6 +18,7 @@ const paths: Record<string, ReactElement[]> = {
   Filter: [<path key="a" d="M4 5h16l-6 7v6l-4 2v-8L4 5Z" />],
   Fuel: [<path key="a" d="M5 21V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v16" />, <path key="b" d="M8 8h5" />, <path key="c" d="M16 8h2l2 2v8a2 2 0 0 0 4 0v-5l-2-2" />],
   LayoutDashboard: [<rect key="a" x="3" y="3" width="7" height="8" rx="1" />, <rect key="b" x="14" y="3" width="7" height="5" rx="1" />, <rect key="c" x="14" y="12" width="7" height="9" rx="1" />, <rect key="d" x="3" y="15" width="7" height="6" rx="1" />],
+  LogOut: [<path key="a" d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />, <polyline key="b" points="16 17 21 12 16 7" />, <line key="c" x1="21" y1="12" x2="9" y2="12" />],
   Mail: [<rect key="a" x="3" y="5" width="18" height="14" rx="2" />, <path key="b" d="m3 7 9 7 9-7" />],
   MapPin: [<path key="a" d="M12 21s7-5.5 7-12A7 7 0 0 0 5 9c0 6.5 7 12 7 12Z" />, <circle key="b" cx="12" cy="9" r="2.5" />],
   MessageSquare: [<path key="a" d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8Z" />],
@@ -72,6 +73,7 @@ export const EyeOff = makeIcon('EyeOff')
 export const Filter = makeIcon('Filter')
 export const Fuel = makeIcon('Fuel')
 export const LayoutDashboard = makeIcon('LayoutDashboard')
+export const LogOut = makeIcon('LogOut')
 export const Mail = makeIcon('Mail')
 export const MapPin = makeIcon('MapPin')
 export const MessageSquare = makeIcon('MessageSquare')

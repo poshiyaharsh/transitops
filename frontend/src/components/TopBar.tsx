@@ -4,6 +4,9 @@ import type { Screen } from '../App'
 interface Props { screen: Screen }
 
 export default function TopBar({ screen }: Props) {
+  const user = JSON.parse(localStorage.getItem('userInfo') || '{}');
+  const initials = user?.name ? user.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() : 'U';
+
   return (
     <header style={{
       height: 72,
@@ -73,7 +76,7 @@ export default function TopBar({ screen }: Props) {
         background: 'linear-gradient(135deg,#F59E0B,#3B82F6)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         fontSize: 13, fontWeight: 700, color: '#fff', cursor: 'pointer',
-      }}>JD</div>
+      }} title={user?.name}>{initials}</div>
     </header>
   )
 }

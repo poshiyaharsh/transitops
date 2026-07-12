@@ -21,6 +21,11 @@ export default function App() {
 
   if (!loggedIn) return <Login onLogin={() => setLoggedIn(true)} />
 
+  const handleLogout = () => {
+    localStorage.removeItem('userInfo');
+    setLoggedIn(false);
+  }
+
   const screens: Record<Screen, React.ReactElement> = {
     Dashboard: <Dashboard />,
     Fleet: <Fleet />,
@@ -34,7 +39,7 @@ export default function App() {
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)' }}>
-      <Sidebar active={activeScreen} onNavigate={setActiveScreen} />
+      <Sidebar active={activeScreen} onNavigate={setActiveScreen} onLogout={handleLogout} />
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
         <TopBar screen={activeScreen} />
         <main style={{ flex: 1, overflowY: 'auto', padding: '24px 32px' }}>

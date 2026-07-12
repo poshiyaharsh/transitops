@@ -1,5 +1,5 @@
 import {
-  LayoutDashboard, Truck, Users, MapPin, Wrench, Fuel, BarChart3, Settings, Zap
+  LayoutDashboard, Truck, Users, MapPin, Wrench, Fuel, BarChart3, Settings, Zap, LogOut
 } from 'lucide-react'
 import type { Screen } from '../App'
 
@@ -17,9 +17,13 @@ const NAV_ITEMS: { label: Screen; icon: React.ReactNode }[] = [
 interface Props {
   active: Screen
   onNavigate: (s: Screen) => void
+  onLogout: () => void
 }
 
-export default function Sidebar({ active, onNavigate }: Props) {
+export default function Sidebar({ active, onNavigate, onLogout }: Props) {
+  const user = JSON.parse(localStorage.getItem('userInfo') || '{}');
+  const initials = user?.name ? user.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() : 'U';
+
   return (
     <aside style={{
       width: 260,
@@ -103,11 +107,23 @@ export default function Sidebar({ active, onNavigate }: Props) {
           background: 'linear-gradient(135deg,#F59E0B,#3B82F6)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: 14, fontWeight: 700, color: '#fff', flexShrink: 0,
-        }}>JD</div>
-        <div style={{ minWidth: 0 }}>
-          <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>James Doe</p>
-          <p style={{ margin: 0, fontSize: 12, color: 'var(--text-secondary)' }}>Fleet Manager</p>
+        }}>{initials}</div>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.name || 'Unknown'}</p>
+          <p style={{ margin: 0, fontSize: 12, color: 'var(--text-secondary)', textTransform: 'capitalize' }}>{user?.role || 'User'}</p>
         </div>
+        <button onClick={onLogout} style={{
+          background: 'none', border: 'none', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: 8, borderRadius: 8,
+          color: 'var(--text-secondary)'
+        }}
+        title="Log out"
+        onMouseEnter={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
+        onMouseLeave={e => e.currentTarget.style.background = 'none'}
+        >
+          <LogOut size={16} />
+        </button>
       </div>
     </aside>
   )
