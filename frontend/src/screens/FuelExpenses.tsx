@@ -66,8 +66,8 @@ export default function FuelExpenses() {
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={MONTHLY} margin={{ top: 4, right: 4, left: -10, bottom: 0 }} barGap={4}>
               <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 12, fill: '#9CA3AF' }} axisLine={false} tickLine={false} tickFormatter={v => `${(v / 1000).toFixed(0)}k`} />
-              <Tooltip contentStyle={{ background: '#1F242D', border: '1px solid #2B313D', borderRadius: 10, fontSize: 13 }} formatter={(v) => `₦${Number(v).toLocaleString()}`} />
+              <YAxis tick={{ fontSize: 12, fill: '#9CA3AF' }} axisLine={false} tickLine={false} tickFormatter={(v: any) => `${(v / 1000).toFixed(0)}k`} />
+              <Tooltip contentStyle={{ background: '#1F242D', border: '1px solid #2B313D', borderRadius: 10, fontSize: 13 }} formatter={(v: any) => `₦${Number(v).toLocaleString()}`} />
               <Bar dataKey="fuel" fill="#F59E0B" radius={[6, 6, 0, 0]} name="Fuel" />
               <Bar dataKey="expenses" fill="#3B82F6" radius={[6, 6, 0, 0]} name="Expenses" />
             </BarChart>
@@ -81,7 +81,7 @@ export default function FuelExpenses() {
               <Pie data={PIE_DATA} cx="50%" cy="50%" innerRadius={50} outerRadius={80} dataKey="value" paddingAngle={3}>
                 {PIE_DATA.map((d, i) => <Cell key={i} fill={d.color} />)}
               </Pie>
-              <Tooltip contentStyle={{ background: '#1F242D', border: '1px solid #2B313D', borderRadius: 10, fontSize: 13 }} formatter={(v) => `₦${Number(v).toLocaleString()}`} />
+              <Tooltip contentStyle={{ background: '#1F242D', border: '1px solid #2B313D', borderRadius: 10, fontSize: 13 }} formatter={(v: any) => `₦${Number(v).toLocaleString()}`} />
             </PieChart>
           </ResponsiveContainer>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>

@@ -81,8 +81,8 @@ export default function Analytics() {
                 </linearGradient>
               </defs>
               <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 12, fill: '#9CA3AF' }} axisLine={false} tickLine={false} tickFormatter={v => `${(v / 1000000).toFixed(1)}M`} />
-              <Tooltip contentStyle={{ background: '#1F242D', border: '1px solid #2B313D', borderRadius: 10, fontSize: 13 }} formatter={(v) => `₦${Number(v).toLocaleString()}`} />
+              <YAxis tick={{ fontSize: 12, fill: '#9CA3AF' }} axisLine={false} tickLine={false} tickFormatter={(v: any) => `${(v / 1000000).toFixed(1)}M`} />
+              <Tooltip contentStyle={{ background: '#1F242D', border: '1px solid #2B313D', borderRadius: 10, fontSize: 13 }} formatter={(v: any) => `₦${Number(v).toLocaleString()}`} />
               <Area type="monotone" dataKey="revenue" stroke="#22C55E" strokeWidth={3} fill="url(#revGrad)" name="Revenue" dot={false} />
               <Area type="monotone" dataKey="cost" stroke="#EF4444" strokeWidth={2} fill="url(#costGrad)" name="Cost" dot={false} />
             </AreaChart>
@@ -96,7 +96,7 @@ export default function Analytics() {
               <Pie data={UTILIZATION} cx="50%" cy="50%" innerRadius={44} outerRadius={72} dataKey="value" paddingAngle={3}>
                 {UTILIZATION.map((d, i) => <Cell key={i} fill={d.color} />)}
               </Pie>
-              <Tooltip contentStyle={{ background: '#1F242D', border: '1px solid #2B313D', borderRadius: 10, fontSize: 13 }} formatter={(v) => `${v}%`} />
+              <Tooltip contentStyle={{ background: '#1F242D', border: '1px solid #2B313D', borderRadius: 10, fontSize: 13 }} formatter={(v: any) => `${v}%`} />
             </PieChart>
           </ResponsiveContainer>
           {UTILIZATION.map(u => (

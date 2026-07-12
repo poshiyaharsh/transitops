@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Eye, EyeOff, Zap, CheckCircle2 } from 'lucide-react'
+import { apiFetch } from '../lib/api'
 
 interface Props { onLogin: () => void }
 
@@ -11,19 +12,33 @@ const FEATURES = [
 ]
 
 export default function Login({ onLogin }: Props) {
-  const [email, setEmail] = useState('admin@transitops.io')
-  const [password, setPassword] = useState('••••••••')
+  const [email, setEmail] = useState('admin@transitops.com')
+  const [password, setPassword] = useState('admin123')
   const [showPass, setShowPass] = useState(false)
   const [role, setRole] = useState('Fleet Manager')
   const [remember, setRemember] = useState(false)
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!email) { setError('Email is required'); return }
     if (!password) { setError('Password is required'); return }
     setError('')
-    onLogin()
+    setLoading(true)
+    
+    try {
+      const data = await apiFetch('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password }),
+      });
+      localStorage.setItem('userInfo', JSON.stringify(data));
+      onLogin()
+    } catch (err: any) {
+      setError(err.message || 'Login failed')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -155,16 +170,17 @@ export default function Login({ onLogin }: Props) {
               </button>
             </div>
 
-            <button type="submit" style={{
+            <button type="submit" disabled={loading} style={{
               height: 48, borderRadius: 12, background: 'var(--primary)',
               border: 'none', color: '#fff', fontWeight: 700, fontSize: 15,
-              cursor: 'pointer', transition: 'background 0.15s',
+              cursor: loading ? 'not-allowed' : 'pointer', transition: 'background 0.15s',
               fontFamily: 'Inter, sans-serif', marginTop: 4,
+              opacity: loading ? 0.7 : 1
             }}
-              onMouseEnter={e => (e.currentTarget.style.background = 'var(--primary-hover)')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'var(--primary)')}
+              onMouseEnter={e => (!loading && (e.currentTarget.style.background = 'var(--primary-hover)'))}
+              onMouseLeave={e => (!loading && (e.currentTarget.style.background = 'var(--primary)'))}
             >
-              Sign In
+              {loading ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
         </div>

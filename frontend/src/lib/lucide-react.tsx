@@ -1,11 +1,11 @@
-import type { SVGProps } from 'react'
+import type { SVGProps, ReactElement } from 'react'
 
 type IconProps = SVGProps<SVGSVGElement> & {
   size?: number | string
   color?: string
 }
 
-const paths: Record<string, JSX.Element[]> = {
+const paths: Record<string, ReactElement[]> = {
   AlertTriangle: [<path key="a" d="M12 4 3 20h18L12 4Z" />, <path key="b" d="M12 9v5" />, <path key="c" d="M12 17h.01" />],
   BarChart3: [<path key="a" d="M5 19V9" />, <path key="b" d="M12 19V5" />, <path key="c" d="M19 19v-7" />],
   Bell: [<path key="a" d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />, <path key="b" d="M10 21h4" />],

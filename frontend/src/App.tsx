@@ -14,7 +14,9 @@ import Settings from './screens/Settings'
 export type Screen = 'Dashboard' | 'Fleet' | 'Drivers' | 'Trips' | 'Maintenance' | 'Fuel & Expenses' | 'Analytics' | 'Settings'
 
 export default function App() {
-  const [loggedIn, setLoggedIn] = useState(false)
+  const [loggedIn, setLoggedIn] = useState(() => {
+    return !!localStorage.getItem('userInfo');
+  })
   const [activeScreen, setActiveScreen] = useState<Screen>('Dashboard')
 
   if (!loggedIn) return <Login onLogin={() => setLoggedIn(true)} />

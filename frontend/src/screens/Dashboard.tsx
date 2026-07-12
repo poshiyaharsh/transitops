@@ -60,7 +60,7 @@ export default function Dashboard() {
             <BarChart data={fuelData} margin={{ top: 4, right: 4, left: -10, bottom: 0 }}>
               <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 12, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
-              <Tooltip contentStyle={{ background: '#1F242D', border: '1px solid #2B313D', borderRadius: 10, fontSize: 13 }} formatter={(v) => [`₦${Number(v).toLocaleString()}`, 'Fuel Cost']} />
+              <Tooltip contentStyle={{ background: '#1F242D', border: '1px solid #2B313D', borderRadius: 10, fontSize: 13 }} formatter={(v: any) => [`₦${Number(v).toLocaleString()}`, 'Fuel Cost']} />
               <Bar dataKey="cost" fill="#3B82F6" radius={[8, 8, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>

@@ -5,6 +5,7 @@ type ChartProps = {
   data?: ChartDatum[]
   children?: React.ReactNode
   margin?: { top?: number; right?: number; bottom?: number; left?: number }
+  [key: string]: any
 }
 
 export function ResponsiveContainer({ children, height = 200 }: { children: React.ReactNode; width?: string | number; height?: number }) {
@@ -99,7 +100,7 @@ function renderAreas(data: ChartDatum[], series: Series[], labelKey: string, max
 export function PieChart({ children }: { children?: React.ReactNode }) {
   const pie = React.Children.toArray(children).find((child) => React.isValidElement(child) && child.type === Pie) as React.ReactElement<PieProps> | undefined
   const data = pie?.props.data ?? []
-  const total = Math.max(1, data.reduce((sum, row) => sum + Number(row[pie?.props.dataKey ?? 'value'] || 0), 0))
+  const total = Math.max(1, data.reduce((sum: number, row: any) => sum + Number(row[pie?.props.dataKey ?? 'value'] || 0), 0))
   let angle = -90
   const cx = 120
   const cy = 88
@@ -108,7 +109,7 @@ export function PieChart({ children }: { children?: React.ReactNode }) {
 
   return (
     <svg viewBox="0 0 240 176" width="100%" height="100%" role="img">
-      {data.map((row, i) => {
+      {data.map((row: any, i: number) => {
         const value = Number(row[pie?.props.dataKey ?? 'value'] || 0)
         const sweep = (value / total) * 360
         const path = donutPath(cx, cy, inner, outer, angle, angle + sweep - 2)
@@ -121,8 +122,8 @@ export function PieChart({ children }: { children?: React.ReactNode }) {
 
 type Series = { dataKey: string; fill: string; stroke?: string; strokeWidth?: number }
 type Padding = { top: number; right: number; bottom: number; left: number }
-type PrimitiveProps = { dataKey?: string; fill?: string; stroke?: string; strokeWidth?: number; children?: React.ReactNode }
-type PieProps = { data?: ChartDatum[]; dataKey?: string; innerRadius?: number; outerRadius?: number; children?: React.ReactNode }
+type PrimitiveProps = Record<string, any>
+type PieProps = Record<string, any>
 
 function collectSeries(children: React.ReactNode): Series[] {
   const found: Series[] = []
