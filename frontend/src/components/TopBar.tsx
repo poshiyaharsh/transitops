@@ -1,11 +1,12 @@
 import { Bell, Search, MessageSquare, ChevronRight } from 'lucide-react'
 import type { Screen } from '../App'
 
-interface Props { screen: Screen }
+interface Props { screen: Screen, companyName: string }
 
-export default function TopBar({ screen }: Props) {
+export default function TopBar({ screen, companyName }: Props) {
   const user = JSON.parse(localStorage.getItem('userInfo') || '{}');
-  const initials = user?.name ? user.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() : 'U';
+  const userFullName = (user?.firstName || '') + ' ' + (user?.lastName || '');
+  const initials = user?.firstName ? (user.firstName[0] + (user.lastName?.[0] || '')).toUpperCase() : 'U';
 
   return (
     <header style={{
@@ -20,7 +21,7 @@ export default function TopBar({ screen }: Props) {
     }}>
       {/* Breadcrumb */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1 }}>
-        <span style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: 500 }}>TransitOps</span>
+        <span style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: 500 }}>{companyName}</span>
         <ChevronRight size={14} color="var(--text-secondary)" />
         <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{screen}</span>
       </div>
@@ -76,7 +77,7 @@ export default function TopBar({ screen }: Props) {
         background: 'linear-gradient(135deg,#F59E0B,#3B82F6)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         fontSize: 13, fontWeight: 700, color: '#fff', cursor: 'pointer',
-      }} title={user?.name}>{initials}</div>
+      }} title={userFullName.trim() || 'User'}>{initials}</div>
     </header>
   )
 }

@@ -18,11 +18,13 @@ interface Props {
   active: Screen
   onNavigate: (s: Screen) => void
   onLogout: () => void
+  companyName: string
 }
 
-export default function Sidebar({ active, onNavigate, onLogout }: Props) {
+export default function Sidebar({ active, onNavigate, onLogout, companyName }: Props) {
   const user = JSON.parse(localStorage.getItem('userInfo') || '{}');
-  const initials = user?.name ? user.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() : 'U';
+  const userFullName = (user?.firstName || '') + ' ' + (user?.lastName || '');
+  const initials = user?.firstName ? (user.firstName[0] + (user.lastName?.[0] || '')).toUpperCase() : 'U';
 
   return (
     <aside style={{
@@ -51,8 +53,8 @@ export default function Sidebar({ active, onNavigate, onLogout }: Props) {
         }}>
           <Zap size={18} color="#fff" fill="#fff" />
         </div>
-        <span style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.3px' }}>
-          TransitOps
+        <span style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.3px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {companyName}
         </span>
       </div>
 
@@ -109,7 +111,7 @@ export default function Sidebar({ active, onNavigate, onLogout }: Props) {
           fontSize: 14, fontWeight: 700, color: '#fff', flexShrink: 0,
         }}>{initials}</div>
         <div style={{ minWidth: 0, flex: 1 }}>
-          <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.name || 'Unknown'}</p>
+          <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{userFullName.trim() || 'Unknown'}</p>
           <p style={{ margin: 0, fontSize: 12, color: 'var(--text-secondary)', textTransform: 'capitalize' }}>{user?.role || 'User'}</p>
         </div>
         <button onClick={onLogout} style={{

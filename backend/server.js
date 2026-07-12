@@ -11,6 +11,7 @@ app.use(express.json());
 
 // Routes
 app.use('/api/auth', require('./src/routes/auth'));
+app.use('/api/settings', require('./src/routes/settings'));
 
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'success', message: 'Backend is running correctly.' });
