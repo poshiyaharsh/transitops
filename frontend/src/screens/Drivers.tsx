@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, AlertTriangle, Star, Phone, Mail } from 'lucide-react'
+import { Plus, AlertTriangle, Star, Phone, Mail, Edit2, Trash2, X } from 'lucide-react'
 import { Card, Badge, PageHeader, PrimaryBtn } from '../components/UI'
 
 interface Driver {
@@ -27,7 +27,13 @@ export default function Drivers() {
   const [drivers, setDrivers] = useState<Driver[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('All')
-  const [isModalOpen, setIsModalOpen] = useState(false)
+  
+  // Modal States
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [currentDriver, setCurrentDriver] = useState<Driver | null>(null)
+
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -39,6 +45,7 @@ export default function Drivers() {
     trips: '0',
     vehicle: '—'
   })
+  
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
@@ -65,7 +72,45 @@ export default function Drivers() {
     fetchDrivers()
   }, [])
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleOpenAddModal = () => {
+    setError('')
+    setFormData({
+      name: '',
+      phone: '',
+      email: '',
+      license: '',
+      expiry: '',
+      status: 'Available',
+      rating: '5.0',
+      trips: '0',
+      vehicle: '—'
+    })
+    setIsAddModalOpen(true)
+  }
+
+  const handleOpenEditModal = (d: Driver) => {
+    setError('')
+    setCurrentDriver(d)
+    setFormData({
+      name: d.name,
+      phone: d.phone,
+      email: d.email,
+      license: d.license,
+      expiry: d.expiry,
+      status: d.status,
+      rating: String(d.rating),
+      trips: String(d.trips),
+      vehicle: d.vehicle
+    })
+    setIsEditModalOpen(true)
+  }
+
+  const handleOpenDeleteModal = (d: Driver) => {
+    setCurrentDriver(d)
+    setIsDeleteModalOpen(true)
+  }
+
+  const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     
@@ -87,18 +132,7 @@ export default function Drivers() {
       })
 
       if (res.ok) {
-        setIsModalOpen(false)
-        setFormData({
-          name: '',
-          phone: '',
-          email: '',
-          license: '',
-          expiry: '',
-          status: 'Available',
-          rating: '5.0',
-          trips: '0',
-          vehicle: '—'
-        })
+        setIsAddModalOpen(false)
         fetchDrivers()
       } else {
         const data = await res.json()
@@ -106,7 +140,64 @@ export default function Drivers() {
       }
     } catch (err) {
       console.error('Error registering driver:', err)
-      setError('A network error occurred. Please try again.')
+      setError('A network error occurred.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    if (!currentDriver) return
+
+    try {
+      setSubmitting(true)
+      const res = await fetch(`http://localhost:5000/api/drivers/${currentDriver.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...formData,
+          rating: formData.rating ? parseFloat(formData.rating) : 5.0,
+          trips: formData.trips ? parseInt(formData.trips, 10) : 0,
+        })
+      })
+
+      if (res.ok) {
+        setIsEditModalOpen(false)
+        fetchDrivers()
+      } else {
+        const data = await res.json()
+        setError(data.message || 'Failed to update driver.')
+      }
+    } catch (err) {
+      console.error('Error updating driver:', err)
+      setError('A network error occurred.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handleDeleteSubmit = async () => {
+    if (!currentDriver) return
+    setError('')
+
+    try {
+      setSubmitting(true)
+      const res = await fetch(`http://localhost:5000/api/drivers/${currentDriver.id}`, {
+        method: 'DELETE'
+      })
+
+      if (res.ok) {
+        setIsDeleteModalOpen(false)
+        fetchDrivers()
+      } else {
+        const data = await res.json()
+        setError(data.message || 'Failed to delete driver.')
+      }
+    } catch (err) {
+      console.error('Error deleting driver:', err)
+      setError('A network error occurred.')
     } finally {
       setSubmitting(false)
     }
@@ -120,7 +211,7 @@ export default function Drivers() {
         title="Drivers"
         subtitle={`${drivers.length} drivers registered`}
         action={
-          <PrimaryBtn onClick={() => setIsModalOpen(true)}>
+          <PrimaryBtn onClick={handleOpenAddModal}>
             <Plus size={16} /> Add Driver
           </PrimaryBtn>
         }
@@ -152,7 +243,7 @@ export default function Drivers() {
           {data.map(d => {
             const expiring = isExpiringSoon(d.expiry)
             return (
-              <Card key={d.id} style={{ cursor: 'pointer', transition: 'transform 0.15s,box-shadow 0.15s' }}
+              <Card key={d.id} style={{ transition: 'transform 0.15s,box-shadow 0.15s' }}
                 onMouseEnter={(e: React.MouseEvent<HTMLDivElement>) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 16px 40px rgba(0,0,0,0.4)' }}
                 onMouseLeave={(e: React.MouseEvent<HTMLDivElement>) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.25)' }}
               >
@@ -171,7 +262,13 @@ export default function Drivers() {
                       <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--text-secondary)' }}>{d.id}</p>
                     </div>
                   </div>
-                  <Badge status={d.status} />
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+                    <Badge status={d.status} />
+                    <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
+                      <button onClick={() => handleOpenEditModal(d)} style={iconBtnSmall} title="Edit Driver"><Edit2 size={12} /></button>
+                      <button onClick={() => handleOpenDeleteModal(d)} style={iconBtnSmall} title="Delete Driver"><Trash2 size={12} /></button>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Stats row */}
@@ -223,108 +320,56 @@ export default function Drivers() {
       )}
 
       {/* Add Driver Modal */}
-      {isModalOpen && (
+      {isAddModalOpen && (
         <div style={modalOverlaySt}>
           <div style={modalContentSt}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>Register New Driver</h3>
-              <button 
-                onClick={() => setIsModalOpen(false)}
-                style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-              </button>
+              <button onClick={() => setIsAddModalOpen(false)} style={closeBtnSt}><X size={18} /></button>
             </div>
 
             {error && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 10, padding: '10px 14px', marginBottom: 18, color: 'var(--danger)', fontSize: 13 }}>
+              <div style={errorBannerSt}>
                 <AlertTriangle size={16} />
                 <span>{error}</span>
               </div>
             )}
 
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleAddSubmit}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
                 <div style={{ gridColumn: 'span 2' }}>
                   <label style={labelSt}>Full Name <span style={{ color: 'var(--danger)' }}>*</span></label>
-                  <input
-                    type="text"
-                    placeholder="e.g. John Doe"
-                    value={formData.name}
-                    onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                    style={inputSt}
-                    required
-                  />
+                  <input type="text" placeholder="e.g. John Doe" value={formData.name} onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))} style={inputSt} required />
                 </div>
 
                 <div>
                   <label style={labelSt}>Phone Number <span style={{ color: 'var(--danger)' }}>*</span></label>
-                  <input
-                    type="tel"
-                    placeholder="e.g. +234 801 234 5678"
-                    value={formData.phone}
-                    onChange={e => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                    style={inputSt}
-                    required
-                  />
+                  <input type="tel" placeholder="e.g. +234 801 234 5678" value={formData.phone} onChange={e => setFormData(prev => ({ ...prev, phone: e.target.value }))} style={inputSt} required />
                 </div>
 
                 <div>
                   <label style={labelSt}>Email Address <span style={{ color: 'var(--danger)' }}>*</span></label>
-                  <input
-                    type="email"
-                    placeholder="e.g. john@transitops.io"
-                    value={formData.email}
-                    onChange={e => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                    style={inputSt}
-                    required
-                  />
+                  <input type="email" placeholder="e.g. john@transitops.io" value={formData.email} onChange={e => setFormData(prev => ({ ...prev, email: e.target.value }))} style={inputSt} required />
                 </div>
 
                 <div>
                   <label style={labelSt}>License Plate / Number <span style={{ color: 'var(--danger)' }}>*</span></label>
-                  <input
-                    type="text"
-                    placeholder="e.g. FG-1234-NG"
-                    value={formData.license}
-                    onChange={e => setFormData(prev => ({ ...prev, license: e.target.value }))}
-                    style={inputSt}
-                    required
-                  />
+                  <input type="text" placeholder="e.g. FG-1234-NG" value={formData.license} onChange={e => setFormData(prev => ({ ...prev, license: e.target.value }))} style={inputSt} required />
                 </div>
 
                 <div>
                   <label style={labelSt}>License Expiry Date <span style={{ color: 'var(--danger)' }}>*</span></label>
-                  <input
-                    type="date"
-                    value={formData.expiry}
-                    onChange={e => setFormData(prev => ({ ...prev, expiry: e.target.value }))}
-                    style={inputSt}
-                    required
-                  />
+                  <input type="date" value={formData.expiry} onChange={e => setFormData(prev => ({ ...prev, expiry: e.target.value }))} style={inputSt} required />
                 </div>
 
                 <div>
                   <label style={labelSt}>Assigned Vehicle</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. TRK-101 or —"
-                    value={formData.vehicle}
-                    onChange={e => setFormData(prev => ({ ...prev, vehicle: e.target.value }))}
-                    style={inputSt}
-                  />
+                  <input type="text" placeholder="e.g. TRK-101 or —" value={formData.vehicle} onChange={e => setFormData(prev => ({ ...prev, vehicle: e.target.value }))} style={inputSt} />
                 </div>
 
                 <div>
                   <label style={labelSt}>Current Status</label>
-                  <select
-                    value={formData.status}
-                    onChange={e => setFormData(prev => ({ ...prev, status: e.target.value }))}
-                    style={selectSt}
-                  >
+                  <select value={formData.status} onChange={e => setFormData(prev => ({ ...prev, status: e.target.value }))} style={selectSt}>
                     <option value="Available" style={{ background: 'var(--card)' }}>Available</option>
                     <option value="On Trip" style={{ background: 'var(--card)' }}>On Trip</option>
                     <option value="Inactive" style={{ background: 'var(--card)' }}>Inactive</option>
@@ -333,49 +378,133 @@ export default function Drivers() {
 
                 <div>
                   <label style={labelSt}>Safety Rating</label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="5"
-                    step="0.1"
-                    placeholder="5.0"
-                    value={formData.rating}
-                    onChange={e => setFormData(prev => ({ ...prev, rating: e.target.value }))}
-                    style={inputSt}
-                  />
+                  <input type="number" min="0" max="5" step="0.1" placeholder="5.0" value={formData.rating} onChange={e => setFormData(prev => ({ ...prev, rating: e.target.value }))} style={inputSt} />
                 </div>
 
                 <div>
                   <label style={labelSt}>Total Trips Completed</label>
-                  <input
-                    type="number"
-                    min="0"
-                    placeholder="0"
-                    value={formData.trips}
-                    onChange={e => setFormData(prev => ({ ...prev, trips: e.target.value }))}
-                    style={inputSt}
-                  />
+                  <input type="number" min="0" placeholder="0" value={formData.trips} onChange={e => setFormData(prev => ({ ...prev, trips: e.target.value }))} style={inputSt} />
                 </div>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
-                <button 
-                  type="button" 
-                  onClick={() => setIsModalOpen(false)}
-                  style={{
-                    height: 40, padding: '0 16px', borderRadius: 10,
-                    border: '1px solid var(--border)', background: 'transparent',
-                    color: 'var(--text-secondary)', fontSize: 13, fontWeight: 600,
-                    cursor: 'pointer', fontFamily: 'Inter, sans-serif'
-                  }}
-                >
-                  Cancel
-                </button>
+                <button type="button" onClick={() => setIsAddModalOpen(false)} style={cancelBtnSt}>Cancel</button>
                 <PrimaryBtn onClick={() => {}} disabled={submitting}>
                   {submitting ? 'Registering...' : 'Register Driver'}
                 </PrimaryBtn>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Driver Modal */}
+      {isEditModalOpen && currentDriver && (
+        <div style={modalOverlaySt}>
+          <div style={modalContentSt}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>Edit Driver Details ({currentDriver.id})</h3>
+              <button onClick={() => setIsEditModalOpen(false)} style={closeBtnSt}><X size={18} /></button>
+            </div>
+
+            {error && (
+              <div style={errorBannerSt}>
+                <AlertTriangle size={16} />
+                <span>{error}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleEditSubmit}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+                <div style={{ gridColumn: 'span 2' }}>
+                  <label style={labelSt}>Full Name *</label>
+                  <input type="text" value={formData.name} onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))} style={inputSt} required />
+                </div>
+
+                <div>
+                  <label style={labelSt}>Phone Number *</label>
+                  <input type="tel" value={formData.phone} onChange={e => setFormData(prev => ({ ...prev, phone: e.target.value }))} style={inputSt} required />
+                </div>
+
+                <div>
+                  <label style={labelSt}>Email Address *</label>
+                  <input type="email" value={formData.email} onChange={e => setFormData(prev => ({ ...prev, email: e.target.value }))} style={inputSt} required />
+                </div>
+
+                <div>
+                  <label style={labelSt}>License Plate *</label>
+                  <input type="text" value={formData.license} onChange={e => setFormData(prev => ({ ...prev, license: e.target.value }))} style={inputSt} required />
+                </div>
+
+                <div>
+                  <label style={labelSt}>License Expiry *</label>
+                  <input type="date" value={formData.expiry} onChange={e => setFormData(prev => ({ ...prev, expiry: e.target.value }))} style={inputSt} required />
+                </div>
+
+                <div>
+                  <label style={labelSt}>Assigned Vehicle</label>
+                  <input type="text" value={formData.vehicle} onChange={e => setFormData(prev => ({ ...prev, vehicle: e.target.value }))} style={inputSt} />
+                </div>
+
+                <div>
+                  <label style={labelSt}>Status</label>
+                  <select value={formData.status} onChange={e => setFormData(prev => ({ ...prev, status: e.target.value }))} style={selectSt}>
+                    <option value="Available" style={{ background: 'var(--card)' }}>Available</option>
+                    <option value="On Trip" style={{ background: 'var(--card)' }}>On Trip</option>
+                    <option value="Inactive" style={{ background: 'var(--card)' }}>Inactive</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={labelSt}>Safety Rating</label>
+                  <input type="number" min="0" max="5" step="0.1" value={formData.rating} onChange={e => setFormData(prev => ({ ...prev, rating: e.target.value }))} style={inputSt} />
+                </div>
+
+                <div>
+                  <label style={labelSt}>Total Trips</label>
+                  <input type="number" min="0" value={formData.trips} onChange={e => setFormData(prev => ({ ...prev, trips: e.target.value }))} style={inputSt} />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
+                <button type="button" onClick={() => setIsEditModalOpen(false)} style={cancelBtnSt}>Cancel</button>
+                <PrimaryBtn onClick={() => {}} disabled={submitting}>
+                  {submitting ? 'Saving...' : 'Save Changes'}
+                </PrimaryBtn>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Driver Modal */}
+      {isDeleteModalOpen && currentDriver && (
+        <div style={modalOverlaySt}>
+          <div style={modalContentSt}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>Delete Driver</h3>
+              <button onClick={() => setIsDeleteModalOpen(false)} style={closeBtnSt}><X size={18} /></button>
+            </div>
+
+            {error && (
+              <div style={errorBannerSt}>
+                <AlertTriangle size={16} />
+                <span>{error}</span>
+              </div>
+            )}
+
+            <div style={{ marginBottom: 24, color: 'var(--text-secondary)', fontSize: 14 }}>
+              Are you sure you want to delete driver <b style={{ color: 'var(--text-primary)' }}>{currentDriver.name} ({currentDriver.id})</b>? This action cannot be undone.
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
+              <button type="button" onClick={() => setIsDeleteModalOpen(false)} style={cancelBtnSt}>Cancel</button>
+              <button onClick={handleDeleteSubmit} disabled={submitting} style={{
+                height: 40, padding: '0 18px', borderRadius: 10, background: 'var(--danger)', border: 'none', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif'
+              }}>
+                {submitting ? 'Deleting...' : 'Delete Driver'}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -442,3 +571,54 @@ const modalContentSt: React.CSSProperties = {
   position: 'relative',
 }
 
+const closeBtnSt: React.CSSProperties = {
+  background: 'transparent',
+  border: 'none',
+  color: 'var(--text-secondary)',
+  cursor: 'pointer',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: 4,
+  borderRadius: 6,
+}
+
+const cancelBtnSt: React.CSSProperties = {
+  height: 40,
+  padding: '0 16px',
+  borderRadius: 10,
+  border: '1px solid var(--border)',
+  background: 'transparent',
+  color: 'var(--text-secondary)',
+  fontSize: 13,
+  fontWeight: 600,
+  cursor: 'pointer',
+  fontFamily: 'Inter, sans-serif'
+}
+
+const errorBannerSt: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 8,
+  background: 'rgba(239,68,68,0.1)',
+  border: '1px solid rgba(239,68,68,0.3)',
+  borderRadius: 10,
+  padding: '10px 14px',
+  marginBottom: 18,
+  color: 'var(--danger)',
+  fontSize: 13
+}
+
+const iconBtnSmall: React.CSSProperties = {
+  width: 26,
+  height: 26,
+  borderRadius: 6,
+  border: '1px solid var(--border)',
+  background: 'transparent',
+  cursor: 'pointer',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  color: 'var(--text-secondary)',
+  transition: 'all 0.1s ease',
+}

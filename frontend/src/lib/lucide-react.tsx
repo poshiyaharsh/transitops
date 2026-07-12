@@ -38,6 +38,9 @@ const paths: Record<string, ReactElement[]> = {
   Users: [<path key="a" d="M16 21a6 6 0 0 0-12 0" />, <circle key="b" cx="10" cy="8" r="4" />, <path key="c" d="M22 21a5 5 0 0 0-5-5M17 4a3 3 0 0 1 0 6" />],
   Wrench: [<path key="a" d="M14.7 6.3a5 5 0 0 0-6.3 6.3L3 18l3 3 5.4-5.4a5 5 0 0 0 6.3-6.3l-3 3-3-3 3-3Z" />],
   Zap: [<path key="a" d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z" />],
+  Trash2: [<path key="a" d="M3 6h18" />, <path key="b" d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />, <path key="c" d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />, <line key="d" x1="10" y1="11" x2="10" y2="17" />, <line key="e" x1="14" y1="11" x2="14" y2="17" />],
+  Edit2: [<path key="a" d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />],
+  X: [<path key="a" d="M18 6 6 18" />, <path key="b" d="m6 6 12 12" />],
 }
 
 function makeIcon(name: string) {
@@ -93,3 +96,6 @@ export const User = makeIcon('User')
 export const Users = makeIcon('Users')
 export const Wrench = makeIcon('Wrench')
 export const Zap = makeIcon('Zap')
+export const Trash2 = makeIcon('Trash2')
+export const Edit2 = makeIcon('Edit2')
+export const X = makeIcon('X')

@@ -15,6 +15,8 @@ app.use('/api/settings', require('./src/routes/settings'));
 app.use('/api/drivers', require('./src/routes/drivers'));
 app.use('/api/vehicles', require('./src/routes/vehicles'));
 app.use('/api/trips', require('./src/routes/trips'));
+app.use('/api/maintenance', require('./src/routes/maintenance'));
+app.use('/api/fuelExpenses', require('./src/routes/fuelExpenses'));
 
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'success', message: 'Backend is running correctly.' });
@@ -24,6 +26,8 @@ app.get('/api/health', (req, res) => {
 const Driver = require('./src/models/Driver');
 const Vehicle = require('./src/models/Vehicle');
 const Trip = require('./src/models/Trip');
+const Maintenance = require('./src/models/Maintenance');
+const FuelExpense = require('./src/models/FuelExpense');
 
 async function seedDrivers() {
   try {
@@ -87,6 +91,43 @@ async function seedTrips() {
   }
 }
 
+async function seedMaintenance() {
+  try {
+    const count = await Maintenance.countDocuments();
+    if (count === 0) {
+      const defaultMaintenance = [
+        { id: 'MNT-441', vehicle: 'TRK-103', type: 'Engine Overhaul', tech: 'Ade Mechanics Ltd', date: '2026-07-10', cost: 480000, status: 'Maintenance', note: 'Cylinder head gasket replaced' },
+        { id: 'MNT-440', vehicle: 'TRK-101', type: 'Oil & Filter Change', tech: 'In-house', date: '2026-07-08', cost: 12500, status: 'Completed', note: 'Next due at 50,000 km' },
+        { id: 'MNT-439', vehicle: 'VAN-202', type: 'Brake Pad Replacement', tech: 'BrakePro Workshop', date: '2026-07-05', cost: 38000, status: 'Completed', note: 'Front and rear done' },
+        { id: 'MNT-438', vehicle: 'TRK-102', type: 'Tire Rotation', tech: 'In-house', date: '2026-07-01', cost: 5000, status: 'Completed', note: '' },
+        { id: 'MNT-437', vehicle: 'TRK-106', type: 'Full Inspection', tech: 'TransitCare Ltd', date: '2026-06-28', cost: 75000, status: 'Completed', note: 'Vehicle flagged for retirement' },
+      ];
+      await Maintenance.insertMany(defaultMaintenance);
+      console.log('Database seeded with default maintenance records.');
+    }
+  } catch (err) {
+    console.error('Error seeding maintenance:', err);
+  }
+}
+
+async function seedFuelExpenses() {
+  try {
+    const count = await FuelExpense.countDocuments();
+    if (count === 0) {
+      const defaultFuel = [
+        { id: 'FL-1001', date: '2026-07-12', vehicle: 'TRK-101', litres: 280, rate: 125, total: 35000, station: 'NNPC Lagos' },
+        { id: 'FL-1002', date: '2026-07-12', vehicle: 'TRK-102', litres: 320, rate: 125, total: 40000, station: 'Total PH' },
+        { id: 'FL-1003', date: '2026-07-11', vehicle: 'VAN-201', litres: 80, rate: 125, total: 10000, station: 'Ardova Kano' },
+        { id: 'FL-1004', date: '2026-07-11', vehicle: 'TRK-104', litres: 240, rate: 125, total: 30000, station: 'NNPC Abuja' },
+      ];
+      await FuelExpense.insertMany(defaultFuel);
+      console.log('Database seeded with default fuel expenses.');
+    }
+  } catch (err) {
+    console.error('Error seeding fuel expenses:', err);
+  }
+}
+
 // Start Server
 const PORT = process.env.PORT || 5000;
 
@@ -96,6 +137,8 @@ mongoose.connect(process.env.MONGO_URI)
     await seedDrivers();
     await seedVehicles();
     await seedTrips();
+    await seedMaintenance();
+    await seedFuelExpenses();
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
   })
   .catch(err => {

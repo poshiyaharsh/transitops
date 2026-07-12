@@ -60,4 +60,46 @@ router.post('/', async (req, res) => {
   }
 });
 
+// PUT /api/drivers/:id - Update driver details
+router.put('/:id', async (req, res) => {
+  try {
+    const { name, phone, email, license, expiry, status, rating, trips, vehicle } = req.body;
+    const driver = await Driver.findOne({ id: req.params.id });
+
+    if (!driver) {
+      return res.status(404).json({ message: 'Driver not found' });
+    }
+
+    if (name !== undefined) driver.name = name;
+    if (phone !== undefined) driver.phone = phone;
+    if (email !== undefined) driver.email = email;
+    if (license !== undefined) driver.license = license;
+    if (expiry !== undefined) driver.expiry = expiry;
+    if (status !== undefined) driver.status = status;
+    if (rating !== undefined) driver.rating = Number(rating);
+    if (trips !== undefined) driver.trips = Number(trips);
+    if (vehicle !== undefined) driver.vehicle = vehicle;
+
+    const updatedDriver = await driver.save();
+    res.json(updatedDriver);
+  } catch (error) {
+    console.error('Error updating driver:', error);
+    res.status(500).json({ message: 'Server Error', error: error.message });
+  }
+});
+
+// DELETE /api/drivers/:id - Delete a driver
+router.delete('/:id', async (req, res) => {
+  try {
+    const result = await Driver.deleteOne({ id: req.params.id });
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ message: 'Driver not found' });
+    }
+    res.json({ message: 'Driver deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting driver:', error);
+    res.status(500).json({ message: 'Server Error', error: error.message });
+  }
+});
+
 module.exports = router;

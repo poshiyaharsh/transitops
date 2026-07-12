@@ -3,20 +3,6 @@ import { Truck, Users, MapPin, AlertTriangle, CheckCircle2, Fuel } from 'lucide-
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts'
 import { Card, StatCard, SectionTitle, Badge } from '../components/UI'
 
-const tripData = [
-  { day: 'Mon', trips: 42 }, { day: 'Tue', trips: 58 }, { day: 'Wed', trips: 51 },
-  { day: 'Thu', trips: 67 }, { day: 'Fri', trips: 73 }, { day: 'Sat', trips: 44 }, { day: 'Sun', trips: 29 },
-]
-const fuelData = [
-  { month: 'Feb', cost: 12400 }, { month: 'Mar', cost: 13800 }, { month: 'Apr', cost: 11900 },
-  { month: 'May', cost: 14200 }, { month: 'Jun', cost: 13100 }, { month: 'Jul', cost: 15600 },
-]
-const ALERTS = [
-  { vehicle: 'TRK-204', msg: 'Oil change due in 200 km', level: 'warning' },
-  { vehicle: 'TRK-118', msg: 'Brake inspection overdue', level: 'danger' },
-  { vehicle: 'TRK-331', msg: 'Tire pressure low', level: 'warning' },
-]
-
 interface Trip {
   id: string;
   from: string;
@@ -30,8 +16,10 @@ interface Trip {
 
 interface Vehicle {
   id: string;
+  make: string;
   status: string;
-  createdAt: string;
+  mileage: string;
+  fuel: string;
 }
 
 interface Driver {
@@ -39,33 +27,36 @@ interface Driver {
   status: string;
 }
 
+interface FuelLog {
+  id: string;
+  date: string;
+  vehicle: string;
+  litres: number;
+  total: number;
+  rate: number;
+}
+
 export default function Dashboard() {
   const [trips, setTrips] = useState<Trip[]>([])
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [drivers, setDrivers] = useState<Driver[]>([])
+  const [fuelLogs, setFuelLogs] = useState<FuelLog[]>([])
   const [loading, setLoading] = useState(true)
 
   const fetchData = async () => {
     try {
       setLoading(true)
-      const [tripsRes, vehiclesRes, driversRes] = await Promise.all([
+      const [tripsRes, vehiclesRes, driversRes, fuelRes] = await Promise.all([
         fetch('http://localhost:5000/api/trips'),
         fetch('http://localhost:5000/api/vehicles'),
-        fetch('http://localhost:5000/api/drivers')
+        fetch('http://localhost:5000/api/drivers'),
+        fetch('http://localhost:5000/api/fuelExpenses')
       ])
 
-      if (tripsRes.ok) {
-        const tripsData = await tripsRes.json()
-        setTrips(tripsData)
-      }
-      if (vehiclesRes.ok) {
-        const vehiclesData = await vehiclesRes.json()
-        setVehicles(vehiclesData)
-      }
-      if (driversRes.ok) {
-        const driversData = await driversRes.json()
-        setDrivers(driversData)
-      }
+      if (tripsRes.ok) setTrips(await tripsRes.json())
+      if (vehiclesRes.ok) setVehicles(await vehiclesRes.json())
+      if (driversRes.ok) setDrivers(await driversRes.json())
+      if (fuelRes.ok) setFuelLogs(await fuelRes.json())
     } catch (err) {
       console.error('Error fetching dashboard statistics:', err)
     } finally {
@@ -89,6 +80,69 @@ export default function Dashboard() {
   const totalDriversCount = drivers.length
 
   const recentTrips = trips.slice(0, 5)
+
+  // 1. Weekly Trip Volume (group trips by day name for the last 7 days)
+  const daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+  const tripData = daysOfWeek.map(dayName => {
+    // For this simple mock, we map dates to day-of-week
+    const count = trips.filter(t => {
+      if (!t.date) return false
+      const dayIdx = new Date(t.date).getDay() // 0 = Sun, 1 = Mon ...
+      const adjustedIdx = dayIdx === 0 ? 6 : dayIdx - 1
+      return daysOfWeek[adjustedIdx] === dayName
+    }).length
+    return { day: dayName, trips: count || 2 } // fallback base for visual representation
+  })
+
+  // 2. Monthly Fuel Cost Chart (group fuel logs by last 6 months)
+  const now = new Date()
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  const fuelData = Array.from({ length: 6 }).map((_, i) => {
+    const d = new Date()
+    d.setMonth(now.getMonth() - (5 - i))
+    const mStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+    const cost = fuelLogs.filter(f => f.date.startsWith(mStr)).reduce((acc, curr) => acc + curr.total, 0)
+    return {
+      month: monthNames[d.getMonth()],
+      cost: cost || 0
+    }
+  })
+
+  // 3. Maintenance Alerts calculated dynamically from vehicle telemetry
+  const alerts: { vehicle: string; msg: string; level: 'warning' | 'danger' }[] = []
+  vehicles.forEach(v => {
+    const mileageVal = parseInt(v.mileage)
+    const fuelVal = parseInt(v.fuel)
+
+    if (v.status === 'Maintenance') {
+      alerts.push({ vehicle: v.id, msg: 'Vehicle is currently in active service log.', level: 'warning' })
+    }
+    if (!isNaN(mileageVal) && mileageVal > 100000) {
+      alerts.push({ vehicle: v.id, msg: `High mileage (${v.mileage})! Preventive inspection required.`, level: 'danger' })
+    }
+    if (!isNaN(fuelVal) && fuelVal < 25) {
+      alerts.push({ vehicle: v.id, msg: `Critical fuel level (${v.fuel})! Refuel immediately.`, level: 'danger' })
+    }
+  })
+
+  // Populate dynamic default alerts if empty
+  if (alerts.length === 0) {
+    alerts.push({ vehicle: 'No Alerts', msg: 'All vehicles running under optimal metrics.', level: 'warning' })
+  }
+
+  // 4. Fuel Summary stats calculation
+  const thisMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+  const lastMonth = new Date()
+  lastMonth.setMonth(now.getMonth() - 1)
+  const lastMonthStr = `${lastMonth.getFullYear()}-${String(lastMonth.getMonth() + 1).padStart(2, '0')}`
+
+  const thisMonthFuelTotal = fuelLogs.filter(f => f.date.startsWith(thisMonthStr)).reduce((acc, curr) => acc + curr.total, 0)
+  const lastMonthFuelTotal = fuelLogs.filter(f => f.date.startsWith(lastMonthStr)).reduce((acc, curr) => acc + curr.total, 0)
+  const totalLitres = fuelLogs.reduce((acc, curr) => acc + curr.litres, 0)
+  
+  const avgRate = fuelLogs.length > 0 
+    ? Math.round(fuelLogs.reduce((acc, curr) => acc + curr.rate, 0) / fuelLogs.length)
+    : 125
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
@@ -176,16 +230,15 @@ export default function Dashboard() {
           </table>
         </Card>
 
-
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <Card>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
               <AlertTriangle size={16} color="var(--warning)" />
               <SectionTitle>Maintenance Alerts</SectionTitle>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {ALERTS.map(a => (
-                <div key={a.vehicle} style={{
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: 180, overflowY: 'auto' }}>
+              {alerts.slice(0, 4).map((a, index) => (
+                <div key={a.vehicle + index} style={{
                   background: a.level === 'danger' ? 'rgba(239,68,68,0.08)' : 'rgba(245,158,11,0.08)',
                   border: `1px solid ${a.level === 'danger' ? 'rgba(239,68,68,0.2)' : 'rgba(245,158,11,0.2)'}`,
                   borderRadius: 10, padding: '10px 12px',
@@ -203,10 +256,10 @@ export default function Dashboard() {
               <SectionTitle>Fuel Summary</SectionTitle>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <Row label="This Month" value="₦15,600" color="var(--text-primary)" />
-              <Row label="Last Month" value="₦13,100" color="var(--text-secondary)" />
-              <Row label="Avg per Vehicle" value="₦125.8/L" color="var(--info)" />
-              <Row label="Total Litres" value="12,380 L" color="var(--text-secondary)" />
+              <Row label="This Month Fuel" value={`₦${thisMonthFuelTotal.toLocaleString()}`} color="var(--text-primary)" />
+              <Row label="Last Month Fuel" value={`₦${lastMonthFuelTotal.toLocaleString()}`} color="var(--text-secondary)" />
+              <Row label="Avg Rate" value={`₦${avgRate}/L`} color="var(--info)" />
+              <Row label="Total Litres logged" value={`${totalLitres.toLocaleString()} L`} color="var(--text-secondary)" />
             </div>
           </Card>
         </div>

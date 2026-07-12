@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const Trip = require('../models/Trip');
+const Vehicle = require('../models/Vehicle');
+const Driver = require('../models/Driver');
 
 // GET /api/trips - Get all trips
 router.get('/', async (req, res) => {
@@ -54,6 +56,19 @@ router.post('/', async (req, res) => {
     });
 
     const savedTrip = await newTrip.save();
+
+    // Side-effects: Update Vehicle & Driver statuses
+    if (newTrip.status === 'On Trip') {
+      await Vehicle.updateOne({ id: vehicle }, { status: 'On Trip' });
+      await Driver.updateOne({ name: driver }, { status: 'On Trip' });
+    } else if (newTrip.status === 'Completed') {
+      await Vehicle.updateOne({ id: vehicle }, { status: 'Available' });
+      await Driver.updateOne({ name: driver }, { status: 'Available', $inc: { trips: 1 } });
+    } else if (newTrip.status === 'Cancelled') {
+      await Vehicle.updateOne({ id: vehicle }, { status: 'Available' });
+      await Driver.updateOne({ name: driver }, { status: 'Available' });
+    }
+
     res.status(201).json(savedTrip);
   } catch (error) {
     console.error('Error creating trip:', error);
@@ -71,6 +86,8 @@ router.put('/:id', async (req, res) => {
       return res.status(404).json({ message: 'Trip not found' });
     }
 
+    const oldStatus = trip.status;
+
     if (status) trip.status = status;
     if (arrival) trip.arrival = arrival;
     if (distance) trip.distance = distance;
@@ -84,6 +101,21 @@ router.put('/:id', async (req, res) => {
     }
 
     const updatedTrip = await trip.save();
+
+    // Trigger side-effects if status changed
+    if (status && oldStatus !== status) {
+      if (status === 'On Trip') {
+        await Vehicle.updateOne({ id: trip.vehicle }, { status: 'On Trip' });
+        await Driver.updateOne({ name: trip.driver }, { status: 'On Trip' });
+      } else if (status === 'Completed') {
+        await Vehicle.updateOne({ id: trip.vehicle }, { status: 'Available' });
+        await Driver.updateOne({ name: trip.driver }, { status: 'Available', $inc: { trips: 1 } });
+      } else if (status === 'Cancelled') {
+        await Vehicle.updateOne({ id: trip.vehicle }, { status: 'Available' });
+        await Driver.updateOne({ name: trip.driver }, { status: 'Available' });
+      }
+    }
+
     res.json(updatedTrip);
   } catch (error) {
     console.error('Error updating trip:', error);
@@ -94,10 +126,18 @@ router.put('/:id', async (req, res) => {
 // DELETE /api/trips/:id - Delete a trip
 router.delete('/:id', async (req, res) => {
   try {
-    const result = await Trip.deleteOne({ id: req.params.id });
-    if (result.deletedCount === 0) {
+    const trip = await Trip.findOne({ id: req.params.id });
+    if (!trip) {
       return res.status(404).json({ message: 'Trip not found' });
     }
+
+    // If trip was active, release vehicle and driver
+    if (trip.status === 'On Trip') {
+      await Vehicle.updateOne({ id: trip.vehicle }, { status: 'Available' });
+      await Driver.updateOne({ name: trip.driver }, { status: 'Available' });
+    }
+
+    await Trip.deleteOne({ id: req.params.id });
     res.json({ message: 'Trip deleted successfully' });
   } catch (error) {
     console.error('Error deleting trip:', error);
