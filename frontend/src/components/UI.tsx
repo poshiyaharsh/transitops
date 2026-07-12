@@ -91,17 +91,17 @@ export function PageHeader({ title, subtitle, action }: { title: string; subtitl
   )
 }
 
-export function PrimaryBtn({ children, onClick }: { children: React.ReactNode; onClick?: () => void }) {
+export function PrimaryBtn({ children, onClick, disabled }: { children: React.ReactNode; onClick?: () => void; disabled?: boolean }) {
   return (
-    <button onClick={onClick} style={{
+    <button onClick={disabled ? undefined : onClick} disabled={disabled} style={{
       height: 44, padding: '0 20px', borderRadius: 12,
-      background: 'var(--primary)', border: 'none',
-      color: '#fff', fontSize: 14, fontWeight: 600,
-      cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
+      background: disabled ? 'var(--border)' : 'var(--primary)', border: 'none',
+      color: disabled ? 'var(--text-secondary)' : '#fff', fontSize: 14, fontWeight: 600,
+      cursor: disabled ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 8,
       fontFamily: 'Inter, sans-serif', transition: 'background 0.15s',
     }}
-      onMouseEnter={e => (e.currentTarget.style.background = 'var(--primary-hover)')}
-      onMouseLeave={e => (e.currentTarget.style.background = 'var(--primary)')}
+      onMouseEnter={e => { if (!disabled) e.currentTarget.style.background = 'var(--primary-hover)' }}
+      onMouseLeave={e => { if (!disabled) e.currentTarget.style.background = 'var(--primary)' }}
     >
       {children}
     </button>
