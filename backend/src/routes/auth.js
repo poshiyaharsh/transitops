@@ -15,7 +15,14 @@ router.post('/login', async (req, res) => {
     
     // For development: If no user exists, create one (so the user can login immediately)
     if (!user) {
-      if (email === 'admin@transitops.com' && password === 'admin123') {
+      if (email === 'vrajpopat47@gmail.com' && password === 'admin123') {
+        user = await User.create({
+          name: 'Vraj Popat',
+          email,
+          password,
+          role: 'admin'
+        });
+      } else if (email === 'admin@transitops.com' && password === 'admin123') {
         user = await User.create({
           name: 'Admin User',
           email,
@@ -40,7 +47,7 @@ router.post('/login', async (req, res) => {
     }
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error', error: error.message, stack: error.stack });
   }
 });
 

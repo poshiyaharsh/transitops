@@ -12,7 +12,7 @@ const FEATURES = [
 ]
 
 export default function Login({ onLogin }: Props) {
-  const [email, setEmail] = useState('admin@transitops.com')
+  const [email, setEmail] = useState('vrajpopat47@gmail.com')
   const [password, setPassword] = useState('admin123')
   const [showPass, setShowPass] = useState(false)
   const [role, setRole] = useState('Fleet Manager')
@@ -130,7 +130,7 @@ export default function Login({ onLogin }: Props) {
                 type="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                placeholder="admin@transitops.io"
+                placeholder="vrajpopat47@gmail.com"
                 style={inputStyle}
               />
             </Field>
