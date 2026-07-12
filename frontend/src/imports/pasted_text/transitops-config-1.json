@@ -1,0 +1,317 @@
+{
+  "project": {
+    "name": "TransitOps",
+    "type": "Enterprise SaaS Dashboard",
+    "description": "Modern transport operations management platform for logistics companies with RBAC authentication, fleet management, dispatch, maintenance, fuel tracking, expenses, reports and analytics.",
+    "platform": "Desktop Web",
+    "responsive": true,
+    "design_style": "Modern Enterprise SaaS",
+    "theme": "Dark",
+    "design_language": "Minimal + Premium + Odoo Inspired"
+  },
+
+  "layout": {
+    "grid": "12 Columns",
+    "container_width": 1440,
+    "sidebar_width": 260,
+    "header_height": 72,
+    "border_radius": 14,
+    "spacing": 24,
+    "section_gap": 32,
+    "card_padding": 24
+  },
+
+  "theme": {
+    "mode": "Dark",
+    "background": "#0F1117",
+    "surface": "#181B22",
+    "card": "#1F242D",
+    "border": "#2B313D",
+    "primary": "#F59E0B",
+    "primary_hover": "#D97706",
+    "secondary": "#3B82F6",
+    "success": "#22C55E",
+    "warning": "#F59E0B",
+    "danger": "#EF4444",
+    "info": "#38BDF8",
+    "text_primary": "#FFFFFF",
+    "text_secondary": "#9CA3AF",
+    "divider": "#2D3748"
+  },
+
+  "typography": {
+    "font_family": "Inter",
+    "heading": {
+      "font_weight": 700
+    },
+    "body": {
+      "font_weight": 500
+    },
+    "caption": {
+      "font_weight": 400
+    }
+  },
+
+  "effects": {
+    "shadow": "0 12 32 rgba(0,0,0,0.35)",
+    "card_shadow": "0 8 24 rgba(0,0,0,0.25)",
+    "glassmorphism": false,
+    "hover_animation": true,
+    "smooth_transition": true
+  },
+
+  "navigation": {
+    "sidebar": {
+      "logo": "TransitOps",
+      "items": [
+        "Dashboard",
+        "Fleet",
+        "Drivers",
+        "Trips",
+        "Maintenance",
+        "Fuel & Expenses",
+        "Analytics",
+        "Settings"
+      ],
+      "active_style": {
+        "background": "#F59E0B",
+        "text": "#FFFFFF",
+        "radius": 12
+      }
+    },
+
+    "topbar": {
+      "search": true,
+      "notifications": true,
+      "messages": true,
+      "profile_dropdown": true,
+      "dark_mode_toggle": false,
+      "breadcrumb": true
+    }
+  },
+
+  "components": {
+
+    "buttons": {
+      "primary": {
+        "radius": 12,
+        "height": 48,
+        "color": "#F59E0B"
+      },
+      "secondary": {
+        "outline": true,
+        "radius": 12
+      },
+      "icon_button": {
+        "shape": "circle"
+      }
+    },
+
+    "cards": {
+      "radius": 18,
+      "padding": 24,
+      "shadow": true,
+      "border": true
+    },
+
+    "inputs": {
+      "radius": 12,
+      "height": 48,
+      "border": "#2B313D",
+      "focus": "#F59E0B"
+    },
+
+    "tables": {
+      "striped": false,
+      "hover": true,
+      "rounded": true,
+      "compact": false
+    },
+
+    "status_badges": {
+      "Available": "#22C55E",
+      "On Trip": "#3B82F6",
+      "Maintenance": "#F59E0B",
+      "Retired": "#EF4444",
+      "Completed": "#22C55E",
+      "Cancelled": "#EF4444",
+      "Scheduled": "#F97316"
+    },
+
+    "charts": {
+      "style": "Modern",
+      "rounded": true,
+      "line_width": 3,
+      "bar_radius": 8
+    }
+  },
+
+  "screens": [
+
+    {
+      "name": "Login",
+      "layout": "Split Screen",
+      "left_panel": {
+        "logo": true,
+        "illustration": "Modern logistics illustration",
+        "company_description": true,
+        "feature_list": true
+      },
+      "right_panel": {
+        "email",
+        "password",
+        "role_dropdown",
+        "remember_me",
+        "forgot_password",
+        "login_button",
+        "validation_messages"
+      }
+    },
+
+    {
+      "name": "Dashboard",
+      "widgets": [
+        "Vehicle Count",
+        "Available Vehicles",
+        "Trips Today",
+        "Drivers On Duty",
+        "Fleet Utilization",
+        "Recent Trips",
+        "Vehicle Status",
+        "Dispatch Overview",
+        "Maintenance Alerts",
+        "Fuel Cost Summary"
+      ]
+    },
+
+    {
+      "name": "Fleet",
+      "features": [
+        "Vehicle Table",
+        "Filters",
+        "Search",
+        "Status Pills",
+        "Quick Actions",
+        "Add Vehicle Drawer",
+        "Vehicle Details Modal"
+      ]
+    },
+
+    {
+      "name": "Drivers",
+      "features": [
+        "Driver Cards",
+        "License Expiry Alert",
+        "Availability Status",
+        "Trip History",
+        "Safety Rating",
+        "Driver Profile"
+      ]
+    },
+
+    {
+      "name": "Trip Dispatcher",
+      "features": [
+        "Timeline",
+        "Create Trip Form",
+        "Vehicle Selector",
+        "Driver Selector",
+        "Validation Rules",
+        "Live Dispatch Board"
+      ]
+    },
+
+    {
+      "name": "Maintenance",
+      "features": [
+        "Maintenance Log",
+        "Service History",
+        "Upcoming Service",
+        "Vehicle Status",
+        "Maintenance Calendar"
+      ]
+    },
+
+    {
+      "name": "Fuel & Expenses",
+      "features": [
+        "Fuel Logs",
+        "Expense Logs",
+        "Total Cost Card",
+        "Vehicle Wise Cost",
+        "Monthly Expense Graph"
+      ]
+    },
+
+    {
+      "name": "Analytics",
+      "widgets": [
+        "Revenue",
+        "Fleet ROI",
+        "Operational Cost",
+        "Fuel Efficiency",
+        "Monthly Trips",
+        "Vehicle Utilization",
+        "Top Vehicles",
+        "Driver Performance",
+        "Expense Distribution",
+        "Maintenance Trend"
+      ]
+    },
+
+    {
+      "name": "Settings",
+      "features": [
+        "Company Settings",
+        "RBAC Matrix",
+        "Permissions",
+        "Theme",
+        "Notification Settings"
+      ]
+    }
+
+  ],
+
+  "design_principles": [
+    "Large whitespace",
+    "Premium spacing",
+    "Soft shadows",
+    "Rounded cards",
+    "Professional typography",
+    "Minimal borders",
+    "Subtle gradients",
+    "Micro interactions",
+    "Modern enterprise dashboard",
+    "Clean data visualization",
+    "Accessible color contrast",
+    "Consistent component system"
+  ],
+
+  "icons": {
+    "library": "Lucide",
+    "style": "Outline"
+  },
+
+  "illustrations": {
+    "style": "Flat 3D",
+    "colors": "Brand Colors"
+  },
+
+  "animations": {
+    "page_transition": "Fade",
+    "hover": "Lift",
+    "button": "Scale 1.03",
+    "card": "Soft Elevation",
+    "sidebar": "Slide",
+    "modal": "Zoom"
+  },
+
+  "quality": {
+    "figma_auto_layout": true,
+    "component_variants": true,
+    "responsive_constraints": true,
+    "design_tokens": true,
+    "pixel_perfect": true,
+    "production_ready": true
+  }
+}
