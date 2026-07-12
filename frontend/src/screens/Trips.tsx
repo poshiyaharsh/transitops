@@ -1,27 +1,145 @@
-import { useState } from 'react'
-import { Plus, MapPin, User, Truck } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Plus, MapPin, User, Truck, AlertTriangle } from 'lucide-react'
 import { Card, Badge, PageHeader, PrimaryBtn } from '../components/UI'
 
-const TRIPS = [
-  { id: 'TRP-8821', from: 'Lagos HQ', to: 'Abuja Terminal', driver: 'Emeka Obi', vehicle: 'TRK-101', status: 'Completed', departure: '06:00', arrival: '08:14', date: '2026-07-12', distance: '762 km' },
-  { id: 'TRP-8820', from: 'Port Harcourt', to: 'Warri Depot', driver: 'Fatima Bello', vehicle: 'TRK-102', status: 'On Trip', departure: '09:30', arrival: '—', date: '2026-07-12', distance: '196 km' },
-  { id: 'TRP-8819', from: 'Kano Hub', to: 'Kaduna Yard', driver: 'Uche Eze', vehicle: 'VAN-201', status: 'Completed', departure: '07:15', arrival: '10:17', date: '2026-07-12', distance: '185 km' },
-  { id: 'TRP-8818', from: 'Ibadan Depot', to: 'Lagos HQ', driver: 'Tunde Adeyemi', vehicle: 'VAN-202', status: 'Cancelled', departure: '11:00', arrival: '—', date: '2026-07-12', distance: '128 km' },
-  { id: 'TRP-8817', from: 'Abuja Terminal', to: 'Jos Depot', driver: 'Chioma Nwosu', vehicle: 'TRK-105', status: 'Scheduled', departure: '08:00', arrival: '—', date: '2026-07-13', distance: '340 km' },
-  { id: 'TRP-8816', from: 'Lagos HQ', to: 'Benin City', driver: 'Emeka Obi', vehicle: 'TRK-101', status: 'Completed', departure: '05:30', arrival: '08:45', date: '2026-07-11', distance: '335 km' },
-]
+interface Trip {
+  id: string;
+  from: string;
+  to: string;
+  driver: string;
+  vehicle: string;
+  status: string;
+  departure: string;
+  arrival: string;
+  date: string;
+  distance: string;
+}
+
+interface Driver {
+  id: string;
+  name: string;
+}
+
+interface Vehicle {
+  id: string;
+  make: string;
+}
 
 export default function Trips() {
+  const [trips, setTrips] = useState<Trip[]>([])
+  const [drivers, setDrivers] = useState<Driver[]>([])
+  const [vehicles, setVehicles] = useState<Vehicle[]>([])
+  const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState('All')
   const [showForm, setShowForm] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState('')
+
+  const [formData, setFormData] = useState({
+    from: '',
+    to: '',
+    date: '',
+    vehicle: '',
+    driver: '',
+    departure: '',
+    status: 'Scheduled'
+  })
+
   const tabs = ['All', 'Scheduled', 'On Trip', 'Completed', 'Cancelled']
-  const data = TRIPS.filter(t => tab === 'All' || t.status === tab)
+
+  const fetchData = async () => {
+    try {
+      setLoading(true)
+      const [tripsRes, driversRes, vehiclesRes] = await Promise.all([
+        fetch('http://localhost:5000/api/trips'),
+        fetch('http://localhost:5000/api/drivers'),
+        fetch('http://localhost:5000/api/vehicles')
+      ])
+
+      if (tripsRes.ok) {
+        const tripsData = await tripsRes.json()
+        setTrips(tripsData)
+      }
+      if (driversRes.ok) {
+        const driversData = await driversRes.json()
+        setDrivers(driversData)
+      }
+      if (vehiclesRes.ok) {
+        const vehiclesData = await vehiclesRes.json()
+        setVehicles(vehiclesData)
+      }
+    } catch (err) {
+      console.error('Error fetching trips data:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchData()
+  }, [])
+
+  useEffect(() => {
+    if (vehicles.length > 0 && !formData.vehicle) {
+      setFormData(prev => ({ ...prev, vehicle: vehicles[0].id }))
+    }
+  }, [vehicles])
+
+  useEffect(() => {
+    if (drivers.length > 0 && !formData.driver) {
+      setFormData(prev => ({ ...prev, driver: drivers[0].name }))
+    }
+  }, [drivers])
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+
+    const { from, to, date, vehicle, driver, departure } = formData
+    if (!from || !to || !date || !vehicle || !driver || !departure) {
+      setError('Please fill in all required fields.')
+      return
+    }
+
+    try {
+      setSubmitting(true)
+      const res = await fetch('http://localhost:5000/api/trips', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      })
+
+      if (res.ok) {
+        setShowForm(false)
+        setFormData({
+          from: '',
+          to: '',
+          date: '',
+          vehicle: vehicles[0]?.id || '',
+          driver: drivers[0]?.name || '',
+          departure: '',
+          status: 'Scheduled'
+        })
+        fetchData()
+      } else {
+        const data = await res.json()
+        setError(data.message || 'Failed to dispatch trip.')
+      }
+    } catch (err) {
+      console.error('Error dispatching trip:', err)
+      setError('A network error occurred. Please try again.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const data = trips.filter(t => tab === 'All' || t.status === tab)
 
   return (
     <div>
       <PageHeader
         title="Trip Dispatcher"
-        subtitle="Manage and dispatch fleet trips"
+        subtitle={loading ? 'Loading trips...' : `Manage and dispatch fleet trips`}
         action={<PrimaryBtn onClick={() => setShowForm(v => !v)}><Plus size={16} /> Create Trip</PrimaryBtn>}
       />
 
@@ -29,46 +147,119 @@ export default function Trips() {
       {showForm && (
         <Card style={{ marginBottom: 24 }}>
           <h3 style={{ margin: '0 0 20px', fontSize: 15, fontWeight: 700 }}>New Trip</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16 }}>
-            {[
-              { label: 'From', placeholder: 'Departure location' },
-              { label: 'To', placeholder: 'Destination' },
-              { label: 'Date', placeholder: 'YYYY-MM-DD', type: 'date' },
-            ].map(f => (
-              <div key={f.label}>
-                <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 8 }}>{f.label}</label>
-                <input type={f.type ?? 'text'} placeholder={f.placeholder} style={inputSt} />
+          
+          {error && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 10, padding: '10px 14px', marginBottom: 18, color: 'var(--danger)', fontSize: 13 }}>
+              <AlertTriangle size={16} />
+              <span>{error}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16 }}>
+              <div>
+                <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 8 }}>From</label>
+                <input 
+                  type="text" 
+                  placeholder="Departure location" 
+                  style={inputSt}
+                  value={formData.from}
+                  onChange={e => setFormData(prev => ({ ...prev, from: e.target.value }))}
+                  required 
+                />
               </div>
-            ))}
-            <div>
-              <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 8 }}>Vehicle</label>
-              <select style={inputSt}>
-                <option>TRK-101 – Mercedes Actros</option>
-                <option>TRK-104 – DAF XF 480</option>
-                <option>VAN-201 – Toyota HiAce</option>
-              </select>
+              <div>
+                <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 8 }}>To</label>
+                <input 
+                  type="text" 
+                  placeholder="Destination" 
+                  style={inputSt}
+                  value={formData.to}
+                  onChange={e => setFormData(prev => ({ ...prev, to: e.target.value }))}
+                  required 
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 8 }}>Date</label>
+                <input 
+                  type="date" 
+                  style={inputSt}
+                  value={formData.date}
+                  onChange={e => setFormData(prev => ({ ...prev, date: e.target.value }))}
+                  required 
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 8 }}>Vehicle</label>
+                <select 
+                  style={inputSt}
+                  value={formData.vehicle}
+                  onChange={e => setFormData(prev => ({ ...prev, vehicle: e.target.value }))}
+                  required
+                >
+                  {vehicles.map(v => (
+                    <option key={v.id} value={v.id} style={{ background: 'var(--card)' }}>
+                      {v.id} – {v.make}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 8 }}>Driver</label>
+                <select 
+                  style={inputSt}
+                  value={formData.driver}
+                  onChange={e => setFormData(prev => ({ ...prev, driver: e.target.value }))}
+                  required
+                >
+                  {drivers.map(d => (
+                    <option key={d.id} value={d.name} style={{ background: 'var(--card)' }}>
+                      {d.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 8 }}>Departure Time</label>
+                <input 
+                  type="time" 
+                  style={inputSt}
+                  value={formData.departure}
+                  onChange={e => setFormData(prev => ({ ...prev, departure: e.target.value }))}
+                  required 
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 8 }}>Initial Status</label>
+                <select 
+                  style={inputSt}
+                  value={formData.status}
+                  onChange={e => setFormData(prev => ({ ...prev, status: e.target.value }))}
+                >
+                  <option value="Scheduled" style={{ background: 'var(--card)' }}>Scheduled</option>
+                  <option value="On Trip" style={{ background: 'var(--card)' }}>On Trip</option>
+                  <option value="Completed" style={{ background: 'var(--card)' }}>Completed</option>
+                  <option value="Cancelled" style={{ background: 'var(--card)' }}>Cancelled</option>
+                </select>
+              </div>
             </div>
-            <div>
-              <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 8 }}>Driver</label>
-              <select style={inputSt}>
-                <option>Emeka Obi</option>
-                <option>Uche Eze</option>
-                <option>Chioma Nwosu</option>
-              </select>
+            <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+              <button 
+                type="submit" 
+                disabled={submitting}
+                style={{ height: 44, padding: '0 24px', borderRadius: 12, background: 'var(--primary)', border: 'none', color: '#fff', fontWeight: 600, fontSize: 14, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}
+              >
+                {submitting ? 'Dispatching...' : 'Dispatch Trip'}
+              </button>
+              <button 
+                type="button"
+                onClick={() => setShowForm(false)} 
+                style={{ height: 44, padding: '0 20px', borderRadius: 12, background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: 14, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}
+              >
+                Cancel
+              </button>
             </div>
-            <div>
-              <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 8 }}>Departure Time</label>
-              <input type="time" style={inputSt} />
-            </div>
-          </div>
-          <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
-            <button style={{ height: 44, padding: '0 24px', borderRadius: 12, background: 'var(--primary)', border: 'none', color: '#fff', fontWeight: 600, fontSize: 14, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
-              Dispatch Trip
-            </button>
-            <button onClick={() => setShowForm(false)} style={{ height: 44, padding: '0 20px', borderRadius: 12, background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: 14, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
-              Cancel
-            </button>
-          </div>
+          </form>
         </Card>
       )}
 
@@ -86,8 +277,18 @@ export default function Trips() {
       </div>
 
       {/* Trip cards */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {data.map(t => (
+      {loading ? (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '40px 0', color: 'var(--text-secondary)' }}>
+          Loading trips data...
+        </div>
+      ) : data.length === 0 ? (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '40px 0', color: 'var(--text-secondary)' }}>
+          No trips found.
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {data.map(t => (
+
           <Card key={t.id} style={{ padding: '18px 24px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
               <div style={{ minWidth: 90 }}>
@@ -133,7 +334,8 @@ export default function Trips() {
             </div>
           </Card>
         ))}
-      </div>
+        </div>
+      )}
     </div>
   )
 }

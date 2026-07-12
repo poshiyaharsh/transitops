@@ -1,45 +1,73 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Plus, Filter, Search, MoreHorizontal, Eye } from 'lucide-react'
 import { Card, Badge, PageHeader, PrimaryBtn } from '../components/UI'
 
-const VEHICLES = [
-  { id: 'TRK-101', make: 'Mercedes Benz Actros', year: 2022, type: 'Heavy Truck', driver: 'Emeka Obi', status: 'Available', mileage: '48,200 km', fuel: '62%' },
-  { id: 'TRK-102', make: 'MAN TGS 26.440', year: 2021, type: 'Heavy Truck', driver: 'Fatima Bello', status: 'On Trip', mileage: '71,450 km', fuel: '38%' },
-  { id: 'TRK-103', make: 'Isuzu FTR 850', year: 2023, type: 'Medium Truck', driver: '—', status: 'Maintenance', mileage: '22,800 km', fuel: '80%' },
-  { id: 'VAN-201', make: 'Toyota HiAce', year: 2022, type: 'Minivan', driver: 'Uche Eze', status: 'Available', mileage: '31,600 km', fuel: '55%' },
-  { id: 'VAN-202', make: 'Ford Transit Custom', year: 2020, type: 'Minivan', driver: 'Tunde Adeyemi', status: 'On Trip', mileage: '95,300 km', fuel: '24%' },
-  { id: 'TRK-104', make: 'DAF XF 480', year: 2021, type: 'Heavy Truck', driver: '—', status: 'Available', mileage: '61,100 km', fuel: '90%' },
-  { id: 'TRK-105', make: 'Scania R500', year: 2019, type: 'Heavy Truck', driver: 'Chioma Nwosu', status: 'On Trip', mileage: '110,200 km', fuel: '41%' },
-  { id: 'TRK-106', make: 'Volvo FH16', year: 2018, type: 'Heavy Truck', driver: '—', status: 'Retired', mileage: '215,400 km', fuel: '0%' },
-]
+interface Vehicle {
+  id: string;
+  make: string;
+  year: number;
+  type: string;
+  driver: string;
+  status: string;
+  mileage: string;
+  fuel: string;
+}
 
 const COLS = ['Vehicle ID', 'Make & Model', 'Type', 'Assigned Driver', 'Status', 'Mileage', 'Fuel', 'Actions']
 
 export default function Fleet() {
+  const [vehicles, setVehicles] = useState<Vehicle[]>([])
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('All')
 
+  const fetchVehicles = async () => {
+    try {
+      setLoading(true)
+      const res = await fetch('http://localhost:5000/api/vehicles')
+      if (res.ok) {
+        const data = await res.json()
+        setVehicles(data)
+      } else {
+        console.error('Failed to fetch vehicles')
+      }
+    } catch (err) {
+      console.error('Error fetching vehicles:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchVehicles()
+  }, [])
+
   const statuses = ['All', 'Available', 'On Trip', 'Maintenance', 'Retired']
-  const data = VEHICLES.filter(v =>
+  const data = vehicles.filter(v =>
     (filter === 'All' || v.status === filter) &&
     (v.id.toLowerCase().includes(search.toLowerCase()) || v.make.toLowerCase().includes(search.toLowerCase()))
   )
+
+  const totalCount = vehicles.length
+  const availableCount = vehicles.filter(v => v.status === 'Available').length
+  const onTripCount = vehicles.filter(v => v.status === 'On Trip').length
+  const maintenanceCount = vehicles.filter(v => v.status === 'Maintenance').length
 
   return (
     <div>
       <PageHeader
         title="Fleet Management"
-        subtitle={`${VEHICLES.length} vehicles registered`}
+        subtitle={loading ? 'Loading vehicles...' : `${totalCount} vehicles registered`}
         action={<PrimaryBtn><Plus size={16} /> Add Vehicle</PrimaryBtn>}
       />
 
       {/* Summary pills */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14, marginBottom: 24 }}>
         {[
-          { label: 'Total', count: 8, color: 'var(--text-secondary)' },
-          { label: 'Available', count: 3, color: 'var(--success)' },
-          { label: 'On Trip', count: 3, color: 'var(--secondary)' },
-          { label: 'Maintenance', count: 1, color: 'var(--warning)' },
+          { label: 'Total', count: totalCount, color: 'var(--text-secondary)' },
+          { label: 'Available', count: availableCount, color: 'var(--success)' },
+          { label: 'On Trip', count: onTripCount, color: 'var(--secondary)' },
+          { label: 'Maintenance', count: maintenanceCount, color: 'var(--warning)' },
         ].map(s => (
           <div key={s.label} style={{
             background: 'var(--card)', border: '1px solid var(--border)',
@@ -51,6 +79,7 @@ export default function Fleet() {
           </div>
         ))}
       </div>
+
 
       <Card>
         {/* Toolbar */}

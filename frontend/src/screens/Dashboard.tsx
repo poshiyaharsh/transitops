@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { Truck, Users, MapPin, AlertTriangle, CheckCircle2, Fuel } from 'lucide-react'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts'
 import { Card, StatCard, SectionTitle, Badge } from '../components/UI'
@@ -10,28 +11,93 @@ const fuelData = [
   { month: 'Feb', cost: 12400 }, { month: 'Mar', cost: 13800 }, { month: 'Apr', cost: 11900 },
   { month: 'May', cost: 14200 }, { month: 'Jun', cost: 13100 }, { month: 'Jul', cost: 15600 },
 ]
-const RECENT_TRIPS = [
-  { id: 'TRP-8821', from: 'Lagos HQ', to: 'Abuja Terminal', driver: 'Emeka Obi', status: 'Completed', time: '2h 14m' },
-  { id: 'TRP-8820', from: 'Port Harcourt', to: 'Warri Depot', driver: 'Fatima Bello', status: 'On Trip', time: '45m left' },
-  { id: 'TRP-8819', from: 'Kano Hub', to: 'Kaduna Yard', driver: 'Uche Eze', status: 'Completed', time: '3h 02m' },
-  { id: 'TRP-8818', from: 'Ibadan Depot', to: 'Lagos HQ', driver: 'Tunde Adeyemi', status: 'Cancelled', time: '—' },
-  { id: 'TRP-8817', from: 'Abuja Terminal', to: 'Jos Depot', driver: 'Chioma Nwosu', status: 'Scheduled', time: 'Tomorrow' },
-]
 const ALERTS = [
   { vehicle: 'TRK-204', msg: 'Oil change due in 200 km', level: 'warning' },
   { vehicle: 'TRK-118', msg: 'Brake inspection overdue', level: 'danger' },
   { vehicle: 'TRK-331', msg: 'Tire pressure low', level: 'warning' },
 ]
 
+interface Trip {
+  id: string;
+  from: string;
+  to: string;
+  driver: string;
+  status: string;
+  departure: string;
+  arrival: string;
+  date: string;
+}
+
+interface Vehicle {
+  id: string;
+  status: string;
+  createdAt: string;
+}
+
+interface Driver {
+  id: string;
+  status: string;
+}
+
 export default function Dashboard() {
+  const [trips, setTrips] = useState<Trip[]>([])
+  const [vehicles, setVehicles] = useState<Vehicle[]>([])
+  const [drivers, setDrivers] = useState<Driver[]>([])
+  const [loading, setLoading] = useState(true)
+
+  const fetchData = async () => {
+    try {
+      setLoading(true)
+      const [tripsRes, vehiclesRes, driversRes] = await Promise.all([
+        fetch('http://localhost:5000/api/trips'),
+        fetch('http://localhost:5000/api/vehicles'),
+        fetch('http://localhost:5000/api/drivers')
+      ])
+
+      if (tripsRes.ok) {
+        const tripsData = await tripsRes.json()
+        setTrips(tripsData)
+      }
+      if (vehiclesRes.ok) {
+        const vehiclesData = await vehiclesRes.json()
+        setVehicles(vehiclesData)
+      }
+      if (driversRes.ok) {
+        const driversData = await driversRes.json()
+        setDrivers(driversData)
+      }
+    } catch (err) {
+      console.error('Error fetching dashboard statistics:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchData()
+  }, [])
+
+  // Calculate KPIs
+  const totalVehiclesCount = vehicles.length
+  const availableVehiclesCount = vehicles.filter(v => v.status === 'Available').length
+  const availablePercentage = totalVehiclesCount > 0 ? ((availableVehiclesCount / totalVehiclesCount) * 100).toFixed(1) : '0'
+
+  const todayStr = new Date().toISOString().split('T')[0]
+  const tripsTodayCount = trips.filter(t => t.date === todayStr).length
+
+  const driversOnDutyCount = drivers.filter(d => d.status === 'On Trip').length
+  const totalDriversCount = drivers.length
+
+  const recentTrips = trips.slice(0, 5)
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
       {/* KPI row */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 20 }}>
-        <StatCard icon={<Truck size={20} />} label="Total Vehicles" value="124" delta="+3 this month" color="var(--secondary)" />
-        <StatCard icon={<CheckCircle2 size={20} />} label="Available" value="89" delta="71.8% of fleet" color="var(--success)" />
-        <StatCard icon={<MapPin size={20} />} label="Trips Today" value="34" delta="+12% vs yesterday" color="var(--primary)" />
-        <StatCard icon={<Users size={20} />} label="Drivers On Duty" value="28" delta="of 42 total" color="var(--info)" />
+        <StatCard icon={<Truck size={20} />} label="Total Vehicles" value={loading ? '...' : String(totalVehiclesCount)} delta="+0 this month" color="var(--secondary)" />
+        <StatCard icon={<CheckCircle2 size={20} />} label="Available" value={loading ? '...' : String(availableVehiclesCount)} delta={loading ? '...' : `${availablePercentage}% of fleet`} color="var(--success)" />
+        <StatCard icon={<MapPin size={20} />} label="Trips Today" value={loading ? '...' : String(tripsTodayCount)} delta="Active dispatcher" color="var(--primary)" />
+        <StatCard icon={<Users size={20} />} label="Drivers On Duty" value={loading ? '...' : String(driversOnDutyCount)} delta={loading ? '...' : `of ${totalDriversCount} total`} color="var(--info)" />
       </div>
 
       {/* Charts row */}
@@ -74,27 +140,42 @@ export default function Dashboard() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr>
-                {['Trip ID', 'Route', 'Driver', 'Status', 'Duration'].map(h => (
+                {['Trip ID', 'Route', 'Driver', 'Status', 'Arrival'].map(h => (
                   <th key={h} style={{ textAlign: 'left', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', padding: '0 0 12px', paddingRight: 8 }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {RECENT_TRIPS.map((t) => (
-                <tr key={t.id} style={{ borderTop: '1px solid var(--border)' }}>
-                  <td style={td}><span style={{ fontWeight: 600, color: 'var(--primary)', fontSize: 13 }}>{t.id}</span></td>
-                  <td style={td}>
-                    <p style={{ margin: 0, fontSize: 13, fontWeight: 500 }}>{t.from}</p>
-                    <p style={{ margin: 0, fontSize: 11, color: 'var(--text-secondary)' }}>→ {t.to}</p>
+              {loading ? (
+                <tr>
+                  <td colSpan={5} style={{ textAlign: 'center', padding: '24px 0', color: 'var(--text-secondary)' }}>
+                    Loading recent trips...
                   </td>
-                  <td style={td}><span style={{ fontSize: 13 }}>{t.driver}</span></td>
-                  <td style={td}><Badge status={t.status} /></td>
-                  <td style={{ ...td, color: 'var(--text-secondary)', fontSize: 13 }}>{t.time}</td>
                 </tr>
-              ))}
+              ) : recentTrips.length === 0 ? (
+                <tr>
+                  <td colSpan={5} style={{ textAlign: 'center', padding: '24px 0', color: 'var(--text-secondary)' }}>
+                    No recent trips found.
+                  </td>
+                </tr>
+              ) : (
+                recentTrips.map((t) => (
+                  <tr key={t.id} style={{ borderTop: '1px solid var(--border)' }}>
+                    <td style={td}><span style={{ fontWeight: 600, color: 'var(--primary)', fontSize: 13 }}>{t.id}</span></td>
+                    <td style={td}>
+                      <p style={{ margin: 0, fontSize: 13, fontWeight: 500 }}>{t.from}</p>
+                      <p style={{ margin: 0, fontSize: 11, color: 'var(--text-secondary)' }}>→ {t.to}</p>
+                    </td>
+                    <td style={td}><span style={{ fontSize: 13 }}>{t.driver}</span></td>
+                    <td style={td}><Badge status={t.status} /></td>
+                    <td style={{ ...td, color: 'var(--text-secondary)', fontSize: 13 }}>{t.arrival}</td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </Card>
+
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <Card>
