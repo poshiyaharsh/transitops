@@ -13,13 +13,18 @@ app.use(express.json());
 app.use('/api/auth', require('./src/routes/auth'));
 app.use('/api/settings', require('./src/routes/settings'));
 app.use('/api/drivers', require('./src/routes/drivers'));
+app.use('/api/vehicles', require('./src/routes/vehicles'));
+app.use('/api/trips', require('./src/routes/trips'));
 
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'success', message: 'Backend is running correctly.' });
 });
 
-// Seed function
+// Seed functions
 const Driver = require('./src/models/Driver');
+const Vehicle = require('./src/models/Vehicle');
+const Trip = require('./src/models/Trip');
+
 async function seedDrivers() {
   try {
     const count = await Driver.countDocuments();
@@ -40,6 +45,48 @@ async function seedDrivers() {
   }
 }
 
+async function seedVehicles() {
+  try {
+    const count = await Vehicle.countDocuments();
+    if (count === 0) {
+      const defaultVehicles = [
+        { id: 'TRK-101', make: 'Mercedes Benz Actros', year: 2022, type: 'Heavy Truck', driver: 'Emeka Obi', status: 'Available', mileage: '48,200 km', fuel: '62%' },
+        { id: 'TRK-102', make: 'MAN TGS 26.440', year: 2021, type: 'Heavy Truck', driver: 'Fatima Bello', status: 'On Trip', mileage: '71,450 km', fuel: '38%' },
+        { id: 'TRK-103', make: 'Isuzu FTR 850', year: 2023, type: 'Medium Truck', driver: '—', status: 'Maintenance', mileage: '22,800 km', fuel: '80%' },
+        { id: 'VAN-201', make: 'Toyota HiAce', year: 2022, type: 'Minivan', driver: 'Uche Eze', status: 'Available', mileage: '31,600 km', fuel: '55%' },
+        { id: 'VAN-202', make: 'Ford Transit Custom', year: 2020, type: 'Minivan', driver: 'Tunde Adeyemi', status: 'On Trip', mileage: '95,300 km', fuel: '24%' },
+        { id: 'TRK-104', make: 'DAF XF 480', year: 2021, type: 'Heavy Truck', driver: '—', status: 'Available', mileage: '61,100 km', fuel: '90%' },
+        { id: 'TRK-105', make: 'Scania R500', year: 2019, type: 'Heavy Truck', driver: 'Chioma Nwosu', status: 'On Trip', mileage: '110,200 km', fuel: '41%' },
+        { id: 'TRK-106', make: 'Volvo FH16', year: 2018, type: 'Heavy Truck', driver: '—', status: 'Retired', mileage: '215,400 km', fuel: '0%' },
+      ];
+      await Vehicle.insertMany(defaultVehicles);
+      console.log('Database seeded with default vehicles.');
+    }
+  } catch (err) {
+    console.error('Error seeding vehicles:', err);
+  }
+}
+
+async function seedTrips() {
+  try {
+    const count = await Trip.countDocuments();
+    if (count === 0) {
+      const defaultTrips = [
+        { id: 'TRP-8821', from: 'Lagos HQ', to: 'Abuja Terminal', driver: 'Emeka Obi', vehicle: 'TRK-101', status: 'Completed', departure: '06:00', arrival: '08:14', date: '2026-07-12', distance: '762 km' },
+        { id: 'TRP-8820', from: 'Port Harcourt', to: 'Warri Depot', driver: 'Fatima Bello', vehicle: 'TRK-102', status: 'On Trip', departure: '09:30', arrival: '—', date: '2026-07-12', distance: '196 km' },
+        { id: 'TRP-8819', from: 'Kano Hub', to: 'Kaduna Yard', driver: 'Uche Eze', vehicle: 'VAN-201', status: 'Completed', departure: '07:15', arrival: '10:17', date: '2026-07-12', distance: '185 km' },
+        { id: 'TRP-8818', from: 'Ibadan Depot', to: 'Lagos HQ', driver: 'Tunde Adeyemi', vehicle: 'VAN-202', status: 'Cancelled', departure: '11:00', arrival: '—', date: '2026-07-12', distance: '128 km' },
+        { id: 'TRP-8817', from: 'Abuja Terminal', to: 'Jos Depot', driver: 'Chioma Nwosu', vehicle: 'TRK-105', status: 'Scheduled', departure: '08:00', arrival: '—', date: '2026-07-13', distance: '340 km' },
+        { id: 'TRP-8816', from: 'Lagos HQ', to: 'Benin City', driver: 'Emeka Obi', vehicle: 'TRK-101', status: 'Completed', departure: '05:30', arrival: '08:45', date: '2026-07-11', distance: '335 km' },
+      ];
+      await Trip.insertMany(defaultTrips);
+      console.log('Database seeded with default trips.');
+    }
+  } catch (err) {
+    console.error('Error seeding trips:', err);
+  }
+}
+
 // Start Server
 const PORT = process.env.PORT || 5000;
 
@@ -47,8 +94,11 @@ mongoose.connect(process.env.MONGO_URI)
   .then(async () => {
     console.log('MongoDB Connected');
     await seedDrivers();
+    await seedVehicles();
+    await seedTrips();
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
   })
   .catch(err => {
     console.error('MongoDB connection error:', err);
   });
+
